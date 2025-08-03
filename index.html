@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VIRALY - AI Video Editor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #ff4ec3;
+      --secondary-color: #7028e4;
+      --accent-color: #e5b2ca;
+      --dark-color: #1a1a2e;
+      --light-color: #f8f9fa;
+      --header-footer-color: rgba(200, 80, 192, 0.9);
+    }
+    
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+      color: var(--light-color);
+      min-height: 100vh;
+      padding-bottom: 60px; /* Space for footer */
+    }
+    
+    header {
+      background-color: var(--header-footer-color);
+      padding: 1.5rem;
+      text-align: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    footer {
+      background-color: var(--header-footer-color);
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.9rem;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
+    
+    .container {
+      padding: 2rem 1rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    .box {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    h3 {
+      margin-top: 0;
+      color: var(--light-color);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    h3 i {
+      color: var(--primary-color);
+    }
+    
+    input[type="file"], 
+    input[type="number"], 
+    input[type="text"],
+    textarea, 
+    select,
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      margin-top: 0.5rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      background-color: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+    }
+    
+    input[type="file"] {
+      background-color: transparent;
+      border: 2px dashed rgba(255, 255, 255, 0.5);
+      color: white;
+    }
+    
+    input[type="file"]::file-selector-button {
+      padding: 0.5rem;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      margin-right: 1rem;
+    }
+    
+    textarea {
+      height: 100px;
+      resize: vertical;
+    }
+    
+    button {
+      background-color: var(--primary-color);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+    
+    button:hover {
+      background-color: #ff2cb6;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    
+    button.secondary {
+      background-color: var(--secondary-color);
+    }
+    
+    button.secondary:hover {
+      background-color: #5a1fd1;
+    }
+    
+    .button-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    
+    .button-group button {
+      flex: 1;
+    }
+    
+    video, audio {
+      width: 100%;
+      border-radius: 1rem;
+      margin-top: 1rem;
+      background-color: var(--dark-color);
+    }
+    
+    label {
+      margin-top: 0.5rem;
+      display: block;
+      font-weight: 500;
+    }
+    
+    .progress-container {
+      width: 100%;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 0.5rem;
+      margin-top: 1rem;
+      overflow: hidden;
+      display: none;
+    }
+    
+    .progress-bar {
+      height: 10px;
+      background-color: var(--primary-color);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    .status {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.8);
+      display: none;
+    }
+    
+    .error {
+      color: #ff6b6b;
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+    }
+    
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-content {
+      background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+      padding: 2rem;
+      border-radius: 1rem;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    
+    .close-modal {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: white;
+    }
+    
+    .social-share {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+    
+    .social-share a {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      color: white;
+      font-size: 1.5rem;
+      text-align: center;
+      line-height: 50px;
+      transition: transform 0.3s ease;
+    }
+    
+    .social-share a:hover {
+      transform: scale(1.1);
+    }
+    
+    .facebook { background-color: #3b5998; }
+    .twitter { background-color: #1da1f2; }
+    .instagram { background-color: #e1306c; }
+    .whatsapp { background-color: #25d366; }
+    .tiktok { background-color: #000000; }
+    
+    @media (max-width: 600px) {
+      header {
+        font-size: 1.5rem;
+        padding: 1rem;
+      }
+      
+      .container {
+        padding: 1rem;
+      }
+      
+      .box {
+        padding: 1rem;
+      }
+      
+      .modal-content {
+        width: 95%;
+        padding: 1.5rem;
+      }
+      
+      .social-share {
+        gap: 0.5rem;
+      }
+      
+      .social-share a {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+        line-height: 40px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header><i class="fas fa-bolt"></i> VIRALY – AI Video Editor</header>
+
+  <div class="container">
+
+    <!-- Upload Video -->
+    <div class="box">
+      <h3><i class="fas fa-video"></i> 1. Upload Video</h3>
+      <input type="file" id="videoInput" accept="video/*"/>
+      <div class="error" id="videoError"></div>
+      <video id="videoPreview" controls></video>
+      <div class="progress-container" id="videoUploadProgress">
+        <div class="progress-bar" id="videoProgressBar"></div>
+      </div>
+      <div class="status" id="videoStatus"></div>
+    </div>
+
+    <!-- Video Options -->
+    <div class="box">
+      <h3><i class="fas fa-sliders-h"></i> Pengaturan Video</h3>
+      <label for="videoSpeed">Kecepatan Pemutaran:</label>
+      <select id="videoSpeed">
+        <option value="0.5">0.5x</option>
+        <option value="0.75">0.75x</option>
+        <option value="1" selected>Normal</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+        <option value="2">2x</option>
+      </select>
+      <label for="videoVolume">Volume:</label>
+      <input type="range" id="videoVolume" min="0" max="1" step="0.1" value="1">
+      <button onclick="applyVideoSettings()">Terapkan Pengaturan</button>
+    </div>
+
+    <!-- Generate Teks AI -->
+    <div class="box">
+      <h3><i class="fas fa-robot"></i> 2. Tambahkan Teks Otomatis (AI)</h3>
+      <textarea id="aiText" placeholder="Teks dari AI akan muncul di sini..."></textarea>
+      <div class="button-group">
+        <button onclick="generateTextAI()" id="generateTextBtn"><i class="fas fa-magic"></i> Generate Teks AI</button>
+        <button onclick="addTextToVideo()" id="addTextBtn" disabled><i class="fas fa-plus"></i> Tambahkan ke Video</button>
+      </div>
+      <div class="progress-container" id="textProgress">
+        <div class="progress-bar" id="textProgressBar"></div>
+      </div>
+      <div class="status" id="textStatus"></div>
+    </div>
+
+    <!-- Voice Over AI -->
+    <div class="box">
+      <h3><i class="fas fa-microphone"></i> 3. Tambahkan Voice-Over AI</h3>
+      <textarea id="aiVoice" placeholder="Tulis teks voice-over..."></textarea>
+      <div class="button-group">
+        <button onclick="generateVoiceOver()" id="voiceOverBtn"><i class="fas fa-play"></i> Putar Voice-Over</button>
+        <button onclick="saveVoiceOver()" id="saveVoiceBtn" disabled><i class="fas fa-save"></i> Simpan ke Video</button>
+      </div>
+      <audio id="voicePreview" controls></audio>
+      <div class="progress-container" id="voiceProgress">
+        <div class="progress-bar" id="voiceProgressBar"></div>
+      </div>
+      <div class="status" id="voiceStatus"></div>
+      <div class="error" id="voiceError"></div>
+    </div>
+
+    <!-- Potong Video -->
+    <div class="box">
+      <h3><i class="fas fa-cut"></i> 4. Potong Video</h3>
+      <label for="startTrim">Mulai (detik):</label>
+      <input type="number" id="startTrim" value="0" min="0" step="0.1" />
+      <label for="endTrim">Selesai (detik):</label>
+      <input type="number" id="endTrim" value="10" min="0" step="0.1" />
+      <button onclick="trimVideo()" id="trimBtn" disabled><i class="fas fa-scissors"></i> Potong Video</button>
+      <div class="status" id="trimStatus"></div>
+      <div class="error" id="trimError"></div>
+    </div>
+
+    <!-- Ekspor Video -->
+    <div class="box">
+      <h3><i class="fas fa-download"></i> 5. Ekspor Video</h3>
+      <label for="exportName">Nama File:</label>
+      <input type="text" id="exportName" placeholder="nama-video" value="viraly-video">
+      <label for="exportFormat">Format:</label>
+      <select id="exportFormat">
+        <option value="mp4">MP4</option>
+        <option value="webm">WebM</option>
+        <option value="gif">GIF</option>
+      </select>
+      <div class="button-group">
+        <button onclick="showPreview()" id="previewBtn" disabled><i class="fas fa-eye"></i> Preview Video</button>
+        <button onclick="exportVideo()" id="exportBtn" disabled><i class="fas fa-file-export"></i> Download</button>
+      </div>
+      <button onclick="showShareModal()" class="secondary" id="shareBtn" disabled><i class="fas fa-share-alt"></i> Bagikan ke Media Sosial</button>
+      <div class="progress-container" id="exportProgress">
+        <div class="progress-bar" id="exportProgressBar"></div>
+      </div>
+      <div class="status" id="exportStatus"></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <p>&copy; 2023 VIRALY - AI Video Editor | Dibuat dengan <i class="fas fa-heart" style="color: #ff4ec3;"></i> untuk kreator konten</p>
+  </footer>
+
+  <!-- Preview Modal -->
+  <div class="modal" id="previewModal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeModal('previewModal')">&times;</span>
+      <h3><i class="fas fa-eye"></i> Preview Video Final</h3>
+      <video id="finalPreview" controls style="width: 100%; margin-top: 1rem;"></video>
+      <p style="text-align: center; margin-top: 1rem;">Periksa video sebelum mengunduh</p>
+    </div>
+  </div>
+
+  <!-- Share Modal -->
+  <div class="modal" id="shareModal">
+    <div class="modal-content">
+      <span class="close-modal" onclick="closeModal('shareModal')">&times;</span>
+      <h3><i class="fas fa-share-alt"></i> Bagikan Video Anda</h3>
+      <p style="text-align: center;">Pilih platform untuk berbagi video Anda:</p>
+      <div class="social-share">
+        <a href="#" class="facebook" onclick="shareTo('facebook')"><i class="fab fa-facebook-f"></i></a>
+        <a href="#" class="twitter" onclick="shareTo('twitter')"><i class="fab fa-twitter"></i></a>
+        <a href="#" class="instagram" onclick="shareTo('instagram')"><i class="fab fa-instagram"></i></a>
+        <a href="#" class="whatsapp" onclick="shareTo('whatsapp')"><i class="fab fa-whatsapp"></i></a>
+        <a href="#" class="tiktok" onclick="shareTo('tiktok')"><i class="fab fa-tiktok"></i></a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Elemen DOM
+    const videoInput = document.getElementById("videoInput");
+    const videoPreview = document.getElementById("videoPreview");
+    const voicePreview = document.getElementById("voicePreview");
+    const finalPreview = document.getElementById("finalPreview");
+    const videoError = document.getElementById("videoError");
+    const videoUploadProgress = document.getElementById("videoUploadProgress");
+    const videoProgressBar = document.getElementById("videoProgressBar");
+    const videoStatus = document.getElementById("videoStatus");
+    const trimBtn = document.getElementById("trimBtn");
+    const exportBtn = document.getElementById("exportBtn");
+    const previewBtn = document.getElementById("previewBtn");
+    const shareBtn = document.getElementById("shareBtn");
+    const addTextBtn = document.getElementById("addTextBtn");
+    const saveVoiceBtn = document.getElementById("saveVoiceBtn");
+    
+    // Modal elements
+    const previewModal = document.getElementById("previewModal");
+    const shareModal = document.getElementById("shareModal");
+    
+    // Variabel state
+    let videoFile = null;
+    let videoDuration = 0;
+    let voiceBlob = null;
+    let videoWithText = null;
+    let videoWithVoice = null;
+    let trimmedVideo = null;
+    let finalVideoBlob = null;
+    
+    // Inisialisasi
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set max duration for trim inputs when video loads
+      videoPreview.addEventListener('loadedmetadata', () => {
+        videoDuration = videoPreview.duration;
+        document.getElementById("endTrim").max = videoDuration;
+        document.getElementById("endTrim").value = Math.min(10, videoDuration);
+      });
+    });
+    
+    // Upload Video
+    videoInput.addEventListener("change", function(e) {
+      videoError.textContent = "";
+      videoStatus.textContent = "";
+      videoUploadProgress.style.display = "none";
+      
+      const file = this.files[0];
+      if (!file) return;
+      
+      // Validasi file video
+      if (!file.type.startsWith("video/")) {
+        videoError.textContent = "File harus berupa video (MP4, WebM, dll.)";
+        return;
+      }
+      
+      // Simulasi upload progress
+      videoUploadProgress.style.display = "block";
+      videoStatus.style.display = "block";
+      videoStatus.textContent = "Memproses video...";
+      
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        videoProgressBar.style.width = `${progress}%`;
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+          videoFile = file;
+          const url = URL.createObjectURL(file);
+          videoPreview.src = url;
+          videoStatus.textContent = "Video siap diedit!";
+          
+          // Enable dependent buttons
+          trimBtn.disabled = false;
+          exportBtn.disabled = false;
+          previewBtn.disabled = false;
+          shareBtn.disabled = false;
+          addTextBtn.disabled = false;
+          saveVoiceBtn.disabled = false;
+        }
+      }, 100);
+    });
+    
+    // Video Settings
+    function applyVideoSettings() {
+      const speed = parseFloat(document.getElementById("videoSpeed").value);
+      const volume = parseFloat(document.getElementById("videoVolume").value);
+      
+      videoPreview.playbackRate = speed;
+      videoPreview.volume = volume;
+      
+      showStatus("videoStatus", `Pengaturan diterapkan: Kecepatan ${speed}x, Volume ${volume * 100}%`);
+    }
+    
+    // Generate Text AI
+    function generateTextAI() {
+      const textarea = document.getElementById("aiText");
+      const generateTextBtn = document.getElementById("generateTextBtn");
+      const textProgress = document.getElementById("textProgress");
+      const textProgressBar = document.getElementById("textProgressBar");
+      const textStatus = document.getElementById("textStatus");
+      
+      // Disable button during generation
+      generateTextBtn.disabled = true;
+      textProgress.style.display = "block";
+      textStatus.style.display = "block";
+      textStatus.textContent = "Membuat teks AI...";
+      
+      // Simulasi proses AI
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 20;
+        textProgressBar.style.width = `${progress}%`;
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+          
+          // Contoh hasil AI (dalam aplikasi nyata ini akan memanggil API AI)
+          const sampleTexts = [
+            "Jangan lewatkan diskon spesial hari ini!",
+            "Video ini dibuat dengan VIRALY - Editor Video AI terbaik!",
+            "Subscribe untuk konten lebih menarik!",
+            "Like dan share jika Anda menikmati video ini!",
+            "Tekan tombol lonceng untuk notifikasi video terbaru!"
+          ];
+          
+          const randomText = sampleTexts[Math.floor(Math.random() * sampleTexts.length)];
+          textarea.value = randomText;
+          
+          textStatus.textContent = "Teks AI berhasil digenerate!";
+          generateTextBtn.disabled = false;
+          
+          // Enable add text button
+          addTextBtn.disabled = false;
+        }
+      }, 300);
+    }
+    
+    // Add Text to Video
+    function addTextToVideo() {
+      const teks = document.getElementById("aiText").value.trim();
+      if (!teks) {
+        showError("textStatus", "Belum ada teks yang digenerate.");
+        return;
+      }
+      
+      // Simulasi proses penambahan teks ke video
+      showStatus("textStatus", `Menambahkan teks "${teks}" ke video...`);
+      
+      // Dalam aplikasi nyata, ini akan memproses video dengan canvas atau WebGL
+      setTimeout(() => {
+        videoWithText = videoFile; // Simpan referensi video dengan teks
+        showStatus("textStatus", "Teks berhasil ditambahkan ke video!");
+      }, 1500);
+    }
+    
+    // Generate Voice Over
+    function generateVoiceOver() {
+      const teks = document.getElementById("aiVoice").value.trim();
+      const voiceError = document.getElementById("voiceError");
+      const voiceOverBtn = document.getElementById("voiceOverBtn");
+      const voiceProgress = document.getElementById("voiceProgress");
+      const voiceProgressBar = document.getElementById("voiceProgressBar");
+      const voiceStatus = document.getElementById("voiceStatus");
+      
+      if (!teks) {
+        voiceError.textContent = "Silakan isi teks untuk voice-over.";
+        return;
+      }
+      
+      voiceError.textContent = "";
+      voiceOverBtn.disabled = true;
+      voiceProgress.style.display = "block";
+      voiceStatus.style.display = "block";
+      voiceStatus.textContent = "Membuat voice-over...";
+      
+      // Simulasi proses generasi voice-over
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 25;
+        voiceProgressBar.style.width = `${progress}%`;
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+          
+          // Gunakan Web Speech API untuk voice-over
+          if ('speechSynthesis' in window) {
+            const utterance = new SpeechSynthesisUtterance(teks);
+            
+            // Pilih voice yang tersedia
+            const voices = speechSynthesis.getVoices();
+            if (voices.length > 0) {
+              // Coba cari voice bahasa Indonesia jika ada
+              const indonesianVoice = voices.find(v => v.lang.includes('id'));
+              if (indonesianVoice) {
+                utterance.voice = indonesianVoice;
+              } else {
+                utterance.voice = voices[0]; // Gunakan voice default
+              }
+            }
+            
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            
+            // Simpan voice sebagai blob (simulasi)
+            speechSynthesis.speak(utterance);
+            
+            // Dalam aplikasi nyata, kita akan merekam audio ini ke blob
+            setTimeout(() => {
+              voiceBlob = new Blob([teks], { type: 'text/plain' }); // Simulasi blob audio
+              voiceStatus.textContent = "Voice-over siap! Klik tombol play untuk mendengar.";
+              voiceOverBtn.disabled = false;
+              saveVoiceBtn.disabled = false;
+              
+              // Enable voice preview (simulasi)
+              voicePreview.src = URL.createObjectURL(new Blob([teks], { type: 'audio/wav' }));
+            }, 1000);
+          } else {
+            voiceError.textContent = "Browser tidak mendukung text-to-speech.";
+            voiceOverBtn.disabled = false;
+          }
+        }
+      }, 200);
+    }
+    
+    // Save Voice Over to Video
+    function saveVoiceOver() {
+      if (!voiceBlob) {
+        showError("voiceStatus", "Belum ada voice-over yang digenerate.");
+        return;
+      }
+      
+      showStatus("voiceStatus", "Menyimpan voice-over ke video...");
+      
+      // Simulasi proses penyimpanan voice-over ke video
+      setTimeout(() => {
+        videoWithVoice = videoFile; // Simpan referensi video dengan voice-over
+        showStatus("voiceStatus", "Voice-over berhasil ditambahkan ke video!");
+      }, 1500);
+    }
+    
+    // Trim Video
+    function trimVideo() {
+      const start = parseFloat(document.getElementById("startTrim").value);
+      const end = parseFloat(document.getElementById("endTrim").value);
+      const trimError = document.getElementById("trimError");
+      const trimStatus = document.getElementById("trimStatus");
+      
+      if (isNaN(start) || isNaN(end)) {
+        trimError.textContent = "Masukkan waktu yang valid.";
+        return;
+      }
+      
+      if (start < 0) {
+        trimError.textContent = "Waktu mulai tidak boleh negatif.";
+        return;
+      }
+      
+      if (end <= start) {
+        trimError.textContent = "Waktu selesai harus setelah waktu mulai.";
+        return;
+      }
+      
+      if (videoDuration && end > videoDuration) {
+        trimError.textContent = `Waktu selesai melebihi durasi video (${videoDuration.toFixed(1)} detik).`;
+        return;
+      }
+      
+      trimError.textContent = "";
+      trimStatus.style.display = "block";
+      trimStatus.textContent = `Memotong video dari ${start} detik sampai ${end} detik...`;
+      
+      // Simulasi proses pemotongan video
+      setTimeout(() => {
+        trimmedVideo = videoFile; // Simpan referensi video yang dipotong
+        trimStatus.textContent = "Video berhasil dipotong!";
+        
+        // Update video preview
+        videoPreview.currentTime = start;
+      }, 2000);
+    }
+    
+    // Show Preview
+    function showPreview() {
+      if (!videoFile) {
+        showError("exportStatus", "Upload video terlebih dahulu.");
+        return;
+      }
+      
+      // Gunakan video yang sudah diproses (trimmed, dengan teks/voice) jika ada
+      finalVideoBlob = trimmedVideo || videoWithVoice || videoWithText || videoFile;
+      finalPreview.src = URL.createObjectURL(finalVideoBlob);
+      
+      // Show modal
+      previewModal.style.display = "flex";
+    }
+    
+    // Export Video
+    function exportVideo() {
+      const exportName = document.getElementById("exportName").value.trim() || "viraly-video";
+      const format = document.getElementById("exportFormat").value;
+      const exportProgress = document.getElementById("exportProgress");
+      const exportProgressBar = document.getElementById("exportProgressBar");
+      const exportStatus = document.getElementById("exportStatus");
+      const exportBtn = document.getElementById("exportBtn");
+      
+      if (!videoFile) {
+        showError("exportStatus", "Upload video terlebih dahulu.");
+        return;
+      }
+      
+      exportBtn.disabled = true;
+      exportProgress.style.display = "block";
+      exportStatus.style.display = "block";
+      exportStatus.textContent = "Menyiapkan video untuk diunduh...";
+      
+      // Simulasi proses ekspor
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 10;
+        exportProgressBar.style.width = `${progress}%`;
+        exportStatus.textContent = `Mengekspor video... ${progress}%`;
+        
+        if (progress >= 100) {
+          clearInterval(interval);
+          
+          // Gunakan video yang sudah diproses (trimmed, dengan teks/voice) jika ada
+          const finalVideo = finalVideoBlob || trimmedVideo || videoWithVoice || videoWithText || videoFile;
+          
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(finalVideo);
+          a.download = `${exportName}.${format}`;
+          a.click();
+          
+          exportStatus.textContent = "Video berhasil diunduh!";
+          exportBtn.disabled = false;
+        }
+      }, 200);
+    }
+    
+    // Share to Social Media
+    function showShareModal() {
+      shareModal.style.display = "flex";
+    }
+    
+    function shareTo(platform) {
+      let shareUrl = "";
+      const text = "Lihat video yang saya buat dengan VIRALY AI Video Editor!";
+      
+      // Dalam aplikasi nyata, ini akan menggunakan URL video yang diunggah
+      const videoUrl = "https://example.com/videos/123"; // URL simulasi
+      
+      switch(platform) {
+        case 'facebook':
+          shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(videoUrl)}`;
+          break;
+        case 'twitter':
+          shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(videoUrl)}`;
+          break;
+        case 'instagram':
+          // Instagram tidak mendukung sharing langsung, ini hanya contoh
+          shareUrl = `https://www.instagram.com/?text=${encodeURIComponent(text)}`;
+          break;
+        case 'whatsapp':
+          shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + videoUrl)}`;
+          break;
+        case 'tiktok':
+          // TikTok tidak mendukung sharing langsung, ini hanya contoh
+          shareUrl = `https://www.tiktok.com/upload?text=${encodeURIComponent(text)}`;
+          break;
+      }
+      
+      // Buka jendela baru untuk berbagi
+      window.open(shareUrl, '_blank', 'width=600,height=400');
+      
+      // Tutup modal setelah berbagi
+      setTimeout(() => closeModal('shareModal'), 1000);
+    }
+    
+    // Modal Functions
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = "none";
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal')) {
+        e.target.style.display = "none";
+      }
+    });
+    
+    // Helper functions
+    function showStatus(elementId, message) {
+      const element = document.getElementById(elementId);
+      element.style.display = "block";
+      element.textContent = message;
+      element.className = "status";
+    }
+    
+    function showError(elementId, message) {
+      const element = document.getElementById(elementId);
+      element.style.display = "block";
+      element.textContent = message;
+      element.className = "error";
+    }
+  </script>
+
+</body>
+</html>
